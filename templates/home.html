@@ -1,0 +1,16 @@
+{{define "home"}}
+{{template "begin"}}
+<div class="slider" style="height: 100% !important">
+	<ul class="slides" style="height: 100% !important">
+		{{range .}}
+			<li><img src={{.Filename}} /></li>
+		{{end}}
+	</ul>
+</div>
+<script>
+$(document).ready(function() {
+	$(".slider").slider({full_width: true});
+});
+</script>
+{{template "end"}}
+{{end}}

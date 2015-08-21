@@ -6,7 +6,8 @@
 			{{if eq .Type "image"}}
 				<img src={{.Name}} width="100%" height="100%" />
 			{{else if eq .Type "video"}}
-				<video src={{.Name}} width="100%" height="100%" loop />
+				<video src={{.Name}} width="100%" height="100%"
+					{{if eq (len $.Files) 1}}loop{{end}} />
 			{{end}}
 		</div>
 	{{end}}

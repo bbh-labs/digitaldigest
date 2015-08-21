@@ -6,7 +6,7 @@
 			{{if eq .Type "image"}}
 				<img src={{.Name}} width="100%" height="100%" />
 			{{else if eq .Type "video"}}
-				<video src={{.Name}} width="100%" height="100%" autoplay />
+				<video src={{.Name}} width="100%" height="100%" loop />
 			{{end}}
 		</div>
 	{{end}}
@@ -19,19 +19,20 @@ $(document).ready(function() {
 	slider.slick({
 		arrows: false,
 		dots: false,
+		infinite: true,
 	});
 
-	slider.on("init", function(e, slick) {
-		var slide = slider.find(".slick-slide:nth-child(1)")
-		var videoContainer = $(slide).has("video");
-		if (videoContainer.length > 0) {
-			var video = videoContainer.children("video");
-			video[0].pause();
-			video[0].currentTime = 0;
-		} else {
-			setNextTimeout(slider);
-		}
-	});
+	var initSlide = $.find(".slider .slick-slide:nth-child(1)");
+	var initVideoContainer = $(initSlide).has("video");
+	if (initVideoContainer.length > 0) {
+		var video = initVideoContainer.children("video");
+		video[0].play();
+		video.on("ended", function(e) {
+			slider.slick("slickNext");
+		});
+	} else {
+		setNextTimeout(slider);
+	}
 
 	slider.on("beforeChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");

@@ -23,17 +23,8 @@ $(document).ready(function() {
 		infinite: true,
 	});
 
-	var initSlide = $.find(".slider .slick-slide:nth-child(1)");
-	var initVideoContainer = $(initSlide).has("video");
-	if (initVideoContainer.length > 0) {
-		var video = initVideoContainer.children("video");
-		video[0].play();
-		video.on("ended", function(e) {
-			slider.slick("slickNext");
-		});
-	} else {
-		setNextTimeout(slider);
-	}
+	// initialize first slide (hack!)
+	slider.slick("slickGoTo", 0);
 
 	slider.on("beforeChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");

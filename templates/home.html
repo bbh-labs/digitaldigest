@@ -21,7 +21,17 @@ $(document).ready(function() {
 		dots: false,
 	});
 
-	setNextTimeout(slider);
+	slider.on("init", function(e, slick) {
+		var slide = slider.find(".slick-slide:nth-child(1)")
+		var videoContainer = $(slide).has("video");
+		if (videoContainer.length > 0) {
+			var video = videoContainer.children("video");
+			video[0].pause();
+			video[0].currentTime = 0;
+		} else {
+			setNextTimeout(slider);
+		}
+	}
 
 	slider.on("beforeChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");

@@ -31,7 +31,7 @@ $(document).ready(function() {
 		} else {
 			setNextTimeout(slider);
 		}
-	}
+	});
 
 	slider.on("beforeChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");

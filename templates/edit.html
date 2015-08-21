@@ -1,0 +1,58 @@
+{{define "edit"}}
+{{template "begin"}}
+<div class="container">
+	<h5>Edit Content</h5>
+
+	<p>{{.UsedDiskSpacePercentage}}% disk space used</p>
+	<div class="progress">
+		<div class="determinate" style="width: " + {{.UsedDiskSpacePercentage}}></div>
+	</div>
+	
+	<p class="flow-text">Content</p>
+	<ul class="collection">
+		{{range .Files}}
+			<li class="collection-item">
+				{{.Name}}
+				<span class="secondary-content">
+					<i class="delete material-icons" data-file="{{.Name}}">delete</i>
+				</span>
+			</li>
+		{{end}}
+	</ul>
+
+	<p class="flow-text">Post Content</p>
+	<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
+		<div class="file-field input-field">
+			<div class="btn">
+				<span>File</span>
+				<input type="file" accept="image/*, video/*" name="file" />
+			</div>
+			<input class="file-path validate" type="text" />
+		</div>
+		<button type="submit" class="btn waves-effect waves-light">Submit</button>
+		<a href="/" class="right btn grey">Back to Content</a>
+	</form>
+</div>
+<script>
+$(document).ready(function() {
+	$(".delete").click(function(evt) {
+		var file = $(evt.target).data("file");
+
+		$.ajax({
+			url: "/edit?" + $.param({file: file}),
+			method: "DELETE",
+			dataType: "json",
+		}).done(function(resp) {
+			window.location.reload();
+		}).fail(function(resp) {
+			if (resp.status == "200") {
+				window.location.reload();
+			} else {
+				console.log(resp);
+			}
+		});
+	});
+});
+</script>
+{{template "end"}}
+{{end}}

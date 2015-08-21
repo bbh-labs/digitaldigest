@@ -1,16 +1,61 @@
 {{define "home"}}
 {{template "begin"}}
-<div class="slider" style="height: 100% !important">
-	<ul class="slides" style="height: 100% !important">
-		{{range .}}
-			<li><img src={{.Filename}} /></li>
-		{{end}}
-	</ul>
+<div class="slider">
+	{{range .Files}}
+		<div>
+			{{if eq .Type "image"}}
+				<img src={{.Name}} width="100%" height="100%" />
+			{{else if eq .Type "video"}}
+				<video src={{.Name}} width="100%" height="100%" autoplay />
+			{{end}}
+		</div>
+	{{end}}
 </div>
 <script>
 $(document).ready(function() {
-	$(".slider").slider({full_width: true});
+	var slider = $(".slider");
+	var nextTimeoutID = -1;
+
+	slider.slick({
+		arrows: false,
+		dots: false,
+	});
+
+	setNextTimeout(slider);
+
+	slider.on("beforeChange", function(e, slick, index) {
+		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
+		var videoContainer = $(slide).has("video");
+		if (videoContainer.length > 0) {
+			var video = videoContainer.children("video");
+			video[0].pause();
+			video[0].currentTime = 0;
+		} else {
+			setNextTimeout(slider);
+		}
+	});
+
+	slider.on("afterChange", function(e, slick, index) {
+		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
+		var videoContainer = $(slide).has("video");
+		if (videoContainer.length > 0) {
+			var video = videoContainer.children("video");
+			video[0].play();
+			video.on("ended", function(e) {
+				slider.slick("slickNext");
+			});
+		} else {
+			setNextTimeout(slider);
+		}
+	});
 });
+
+function setNextTimeout(slider) {
+	nextTimeoutID = window.setTimeout(function() {
+		slider.slick("slickNext");
+		window.clearTimeout(nextTimeoutID);
+	}, 5000);
+}
 </script>
 {{template "end"}}
 {{end}}

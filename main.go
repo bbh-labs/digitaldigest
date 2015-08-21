@@ -1,27 +1,34 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"io"
 	"io/ioutil"
 	"html/template"
+	"mime"
 	"net/http"
-	"net/textproto"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 )
 
-const MultipartMaxMemory = 4 * 1024 * 1024 // 4MB
+const (
+	MultipartMaxMemory = 4 * 1024 * 1024 // 4MB
+	totalDiskSpace = 1 * 1024 * 1024 * 1024 // 1GB
+)
+
+var templates *template.Template
 
 type File struct {
-	Filename string
+	Name string
 	Type string
 }
 
-func listFiles() interface{} {
+func listFiles() []File {
 	fileinfos, err := ioutil.ReadDir("content")
 	if err != nil {
 		log.Fatal(err)
@@ -30,23 +37,49 @@ func listFiles() interface{} {
 	var files []File
 	for _, fileinfo := range fileinfos {
 		var file File
-		file.Filename = "content/" + fileinfo.Name()
+		file.Name = "content/" + fileinfo.Name()
+
+		var mimeType = mime.TypeByExtension(path.Ext(file.Name))
+		if strings.Contains(mimeType, "image") {
+			file.Type = "image"
+		} else if strings.Contains(mimeType, "video") {
+			file.Type = "video"
+		}
 		files = append(files, file)
 	}
 
 	return files
 }
 
+func usedDiskSpace() int64 {
+	fileinfos, err := ioutil.ReadDir("content")
+	if err != nil {
+		log.Fatal(err)
+		return -1
+	}
+
+	var total int64
+	for _, fileinfo := range fileinfos {
+		total += fileinfo.Size()
+	}
+
+	return total
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "home", listFiles())
+	data := struct {
+		Files []File
+	}{
+		Files: listFiles(),
+	}
+
+	templates.ExecuteTemplate(w, "home", data)
 }
 
-func admin(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "admin", listFiles())
-}
-
-func content(w http.ResponseWriter, r *http.Request) {
+func edit(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+	case "GET":
+		getContent(w, r)
 	case "POST":
 		postContent(w, r)
 	case "DELETE":
@@ -54,6 +87,18 @@ func content(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
+
+func getContent(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		UsedDiskSpacePercentage string
+		Files []File
+	}{
+		UsedDiskSpacePercentage: fmt.Sprintf("%.3f", float64(usedDiskSpace()) / float64(totalDiskSpace)),
+		Files: listFiles(),
+	}
+
+	templates.ExecuteTemplate(w, "edit", data)
 }
 
 func postContent(w http.ResponseWriter, r *http.Request) {
@@ -70,14 +115,6 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := os.OpenFile("content/" + headers[0].Filename, os.O_CREATE, 0600)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-	defer output.Close()
-
 	file, err := headers[0].Open()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -86,49 +123,41 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	filepath := "content/" + headers[0].Filename
+	output, err := os.OpenFile(filepath, os.O_CREATE | os.O_WRONLY, 0600)
+	if err != nil {
+		os.Remove(filepath)
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+	defer output.Close()
+
 	if _, err = io.Copy(output, file); err != nil {
+		os.Remove(filepath)
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	http.Redirect(w, r, "/edit", http.StatusFound)
 }
 
 func deleteContent(w http.ResponseWriter, r *http.Request) {
-	filepath := r.FormValue("filepath")
+	file := r.FormValue("file")
 
-	if err := os.Remove(filepath); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
+	if err := os.Remove(file); err != nil {
+		if os.IsNotExist(err) {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("File " + file + " was not found!"))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+		}
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-var templates *template.Template
-
-func isImage(mime textproto.MIMEHeader) bool {
-	for _, v := range mime {
-		for _, vv := range v {
-			if strings.Contains(vv, "image") {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func isVideo(mime textproto.MIMEHeader) bool {
-	for _, v := range mime {
-		for _, vv := range v {
-			if strings.Contains(vv, "video") {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func main() {
@@ -136,16 +165,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	templates = template.Must(template.ParseGlob("templates/*.html"))
-	templates = templates.Funcs(map[string]interface{}{
-		"isImage": isImage,
-		"isVideo": isVideo,
-	})
+	templates = template.Must(template.New("t").ParseGlob("templates/*.html"))
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", home)
-	router.HandleFunc("/admin", admin)
-	router.HandleFunc("/content", content)
+	router.HandleFunc("/edit", edit)
 
 	n := negroni.Classic()
 	n.UseHandler(router)

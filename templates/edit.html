@@ -20,6 +20,10 @@
 		{{end}}
 	</ul>
 
+	<p class="flow-text">Reload Content</p>
+	<p>This will cause browsers who are viewing the main page to reload</p>
+	<button id="reload" class="btn waves-effect waves-light">Reload</button>
+
 	<p class="flow-text">Post Content</p>
 	<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
 		<div class="file-field input-field">
@@ -52,7 +56,38 @@ $(document).ready(function() {
 			}
 		});
 	});
+
+	$("#reload").click(function(evt) {
+		if (websocket.readyState == 1) {
+			websocket.send("reload");
+		}
+	});
 });
+
+<!-- Websocket -->
+function tryWebsocket() {
+	if (typeof(websocket) != "undefined") {
+		if (websocket.readyState != 3) {
+			if (typeof(websocketTimeoutID) == "number") {
+				window.clearTimeout(websocketTimeoutID);
+			}
+			return;
+		}
+	}
+
+	websocket = new WebSocket("ws://" + BaseURL + "/ws");
+	websocket.onopen = function(evt) {
+		console.log("Connected to WebSocket");
+	}
+	websocket.onclose = function(evt) {
+		console.log("Disconnected from WebSocket");
+		tryWebsocket();
+	}
+
+	websocketTimeoutID = window.setTimeout(tryWebsocket, 1000);
+}
+
+tryWebsocket();
 </script>
 {{template "end"}}
 {{end}}

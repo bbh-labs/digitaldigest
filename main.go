@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"html/template"
 	"io"
 	"io/ioutil"
-	"html/template"
+	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	MultipartMaxMemory = 4 * 1024 * 1024 // 4MB
-	totalDiskSpace = 1 * 1024 * 1024 * 1024 // 1GB
+	MultipartMaxMemory = 4 * 1024 * 1024        // 4MB
+	totalDiskSpace     = 1 * 1024 * 1024 * 1024 // 1GB
 )
 
 var templates *template.Template
@@ -92,9 +92,9 @@ func edit(w http.ResponseWriter, r *http.Request) {
 func getContent(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		UsedDiskSpacePercentage string
-		Files []File
+		Files                   []File
 	}{
-		UsedDiskSpacePercentage: fmt.Sprintf("%.3f", float64(usedDiskSpace()) / float64(totalDiskSpace)),
+		UsedDiskSpacePercentage: fmt.Sprintf("%.3f", float64(usedDiskSpace())/float64(totalDiskSpace)),
 		Files: listFiles(),
 	}
 
@@ -124,7 +124,7 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	filepath := "content/" + headers[0].Filename
-	output, err := os.OpenFile(filepath, os.O_CREATE | os.O_WRONLY, 0600)
+	output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		os.Remove(filepath)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -170,6 +170,10 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", home)
 	router.HandleFunc("/edit", edit)
+	router.Handle("/ws", ws)
+	go func() {
+		ws.h.run()
+	}()
 
 	n := negroni.Classic()
 	n.UseHandler(router)

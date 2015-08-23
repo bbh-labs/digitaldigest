@@ -58,6 +58,36 @@ function setNextTimeout(slider) {
 		window.clearTimeout(nextTimeoutID);
 	}, 5000);
 }
+
+<!-- Websocket -->
+function tryWebsocket() {
+	if (typeof(websocket) != "undefined") {
+		if (websocket.readyState != 3) {
+			if (typeof(websocketTimeoutID) == "number") {
+				window.clearTimeout(websocketTimeoutID);
+			}
+			return;
+		}
+	}
+
+	websocket = new WebSocket("ws://" + BaseURL + "/ws");
+	websocket.onopen = function(evt) {
+		console.log("Connected to WebSocket");
+		websocket.onmessage = function(evt) {
+			if (evt.data == "reload") {
+				window.location.reload();
+			}
+		}
+	}
+	websocket.onclose = function(evt) {
+		console.log("Disconnected from WebSocket");
+		tryWebsocket();
+	}
+
+	websocketTimeoutID = window.setTimeout(tryWebsocket, 1000);
+}
+
+tryWebsocket();
 </script>
 {{template "end"}}
 {{end}}

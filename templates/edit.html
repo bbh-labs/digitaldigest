@@ -8,34 +8,40 @@
 		<div class="determinate" style="width: " + {{.UsedDiskSpacePercentage}}></div>
 	</div>
 	
-	<p class="flow-text">Content</p>
-	<ul class="collection">
-		{{range .Files}}
-			<li class="collection-item">
-				{{.Name}}
-				<span class="secondary-content">
-					<i class="delete material-icons" data-file="{{.Name}}">delete</i>
-				</span>
-			</li>
-		{{end}}
-	</ul>
+	<section>
+		<p class="flow-text">Content</p>
+		<ul class="collection">
+			{{range .Files}}
+				<li class="collection-item">
+					{{.Name}}
+					<span class="secondary-content">
+						<i class="delete material-icons" data-file="{{.Name}}">delete</i>
+					</span>
+				</li>
+			{{end}}
+		</ul>
+	</section>
 
-	<p class="flow-text">Reload Content</p>
-	<p>This will cause browsers who are viewing the main page to reload</p>
-	<button id="reload" class="btn waves-effect waves-light">Reload</button>
+	<section>
+		<p class="flow-text">Reload Content</p>
+		<p>This will cause browsers who are viewing the main page to reload</p>
+		<button id="reload" class="btn waves-effect waves-light">Reload</button>
+	</section>
 
-	<p class="flow-text">Post Content</p>
-	<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
-		<div class="file-field input-field">
-			<div class="btn">
-				<span>File</span>
-				<input type="file" accept="image/*, video/*" name="file" />
+	<section>
+		<p class="flow-text">Post Content</p>
+		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
+			<div class="file-field input-field">
+				<div class="btn">
+					<span>File</span>
+					<input type="file" accept="image/*, video/*" name="file" />
+				</div>
+				<input class="file-path validate" type="text" />
 			</div>
-			<input class="file-path validate" type="text" />
-		</div>
-		<button type="submit" class="btn waves-effect waves-light">Submit</button>
-		<a href="/" class="right btn grey">Back to Content</a>
-	</form>
+			<button type="submit" class="btn waves-effect waves-light">Submit</button>
+			<a href="/" class="right btn grey">Back to Content</a>
+		</form>
+	</section>
 </div>
 <script>
 $(document).ready(function() {

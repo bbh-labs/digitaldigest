@@ -50,6 +50,7 @@ $(document).ready(function() {
 		var videoContainer = $(slide).has("video");
 		if (videoContainer.length > 0) {
 			var video = videoContainer.children("video");
+			video[0].load();
 			video[0].play();
 			video.on("ended", function(e) {
 				slider.slick("slickNext");

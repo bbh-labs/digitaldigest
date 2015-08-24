@@ -9,7 +9,7 @@
 			{{if eq .Type "image"}}
 				<img src={{.Name}} width="100%" height="100%" />
 			{{else if eq .Type "video"}}
-				<video src={{.Name}} width="100%" height="100%"
+				<video src="" data-src={{.Name}} width="100%" height="100%"
 					{{if $onlyOneVideo}}
 						loop
 					{{end}} />
@@ -39,8 +39,7 @@ $(document).ready(function() {
 		
 		if (videoContainer.length > 0) {
 			var video = videoContainer.children("video");
-			video[0].pause();
-			video[0].currentTime = 0;
+			video[0].src = "";
 		}
 		window.clearTimeout(nextTimeoutID);
 	});
@@ -50,6 +49,7 @@ $(document).ready(function() {
 		var videoContainer = $(slide).has("video");
 		if (videoContainer.length > 0) {
 			var video = videoContainer.children("video");
+			video[0].src = video.data("src");
 			video[0].load();
 			video[0].play();
 			video.on("ended", function(e) {

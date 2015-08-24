@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"html/template"
 	"log"
 	"os"
@@ -12,6 +13,8 @@ import (
 var templates *template.Template
 
 func main() {
+	flag.Parse()
+
 	if err := os.Mkdir("content", 0700); err != nil && !os.IsExist(err) {
 		log.Fatal(err)
 	}

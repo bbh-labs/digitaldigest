@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 	"strings"
 
@@ -10,10 +11,12 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+var redirectURL = flag.String("url", "http://localhost:8080", "redirect URL for OAuth2")
+
 var conf = &oauth2.Config{
 	ClientID:     "275859936684-90o26gr4hdbr4jgvdjobuath4qhq90fc.apps.googleusercontent.com",
 	ClientSecret: "G-rp5gffbNDQgMgAhMxT5I7m",
-	RedirectURL:  "http://localhost:8080",
+	RedirectURL:  *redirectURL,
 	Endpoint:     google.Endpoint,
 }
 
@@ -27,6 +30,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		}
 	case "POST":
 		authCode := r.FormValue("authCode")
+		conf.RedirectURL = *redirectURL
 
 		tok, err := conf.Exchange(oauth2.NoContext, authCode)
 		if err != nil {

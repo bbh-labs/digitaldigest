@@ -43,6 +43,7 @@ $(document).ready(function() {
 		} else {
 			setNextTimeout(slider);
 		}
+		window.clearTimeout(nextTimeoutID);
 	});
 
 	slider.on("afterChange", function(e, slick, index) {
@@ -62,7 +63,6 @@ $(document).ready(function() {
 
 function setNextTimeout(slider) {
 	nextTimeoutID = window.setTimeout(function() {
-		console.log("Test");
 		slider.slick("slickNext");
 		window.clearTimeout(nextTimeoutID);
 	}, 5000);

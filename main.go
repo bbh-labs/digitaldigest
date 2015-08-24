@@ -94,7 +94,7 @@ func getContent(w http.ResponseWriter, r *http.Request) {
 		UsedDiskSpacePercentage string
 		Files                   []File
 	}{
-		UsedDiskSpacePercentage: fmt.Sprintf("%.3f", float64(usedDiskSpace())/float64(totalDiskSpace)),
+		UsedDiskSpacePercentage: fmt.Sprintf("%.1f", float64(usedDiskSpace())/float64(totalDiskSpace)*100),
 		Files: listFiles(),
 	}
 

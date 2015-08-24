@@ -36,6 +36,9 @@ $(document).ready(function() {
 	slider.on("beforeChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
 		var videoContainer = $(slide).has("video");
+		
+		window.clearTimeout(nextTimeoutID);
+
 		if (videoContainer.length > 0) {
 			var video = videoContainer.children("video");
 			video[0].pause();
@@ -43,7 +46,6 @@ $(document).ready(function() {
 		} else {
 			setNextTimeout(slider);
 		}
-		window.clearTimeout(nextTimeoutID);
 	});
 
 	slider.on("afterChange", function(e, slick, index) {

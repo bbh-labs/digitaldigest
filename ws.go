@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/bbhasiapacific/digitaldigest/session"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,10 +15,17 @@ type wsHandler struct {
 }
 
 func (wsh wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	email := session.GetEmail(r)
+	if email == "" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
+
 	c := &connection{send: make(chan []byte, 256), ws: ws, h: wsh.h}
 	c.h.register <- c
 	defer func() { c.h.unregister <- c }()

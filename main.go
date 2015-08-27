@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/bbhasiapacific/digitaldigest/store"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 )
@@ -14,6 +15,8 @@ var templates *template.Template
 
 func main() {
 	flag.Parse()
+
+	store.Init()
 
 	if err := os.Mkdir("content", 0700); err != nil && !os.IsExist(err) {
 		log.Fatal(err)

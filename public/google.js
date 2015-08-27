@@ -4,10 +4,11 @@ function signInCallback(authResult) {
 		$.ajax({
 			type: "POST",
 			url: "/login",
-			success: function(result) {
-				window.location.reload();
-			},
 			data: {authCode: authResult["code"]},
+		}).done(function(resp) {
+			window.location.reload();
+		}).fail(function(resp) {
+			Materialize.toast(resp.statusText, 3000, "red white-text");
 		});
 	} else {
 		// There was an error.

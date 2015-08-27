@@ -100,7 +100,7 @@ function tryWebsocket() {
 		}
 	}
 
-	websocket = new WebSocket("ws://" + BaseURL + "/ws");
+	websocket = new WebSocket("ws://" + BaseURL + "/ws/edit");
 	websocket.onopen = function(evt) {
 		console.log("Connected to WebSocket");
 	}

@@ -8,13 +8,32 @@ import (
 )
 
 var upgrader = &websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
-var ws = wsHandler{newHub()}
+var wsHub = newHub()
+var homeWS = homeWSHandler{wsHub}
+var editWS = editWSHandler{wsHub}
 
-type wsHandler struct {
+type homeWSHandler struct {
 	h *hub
 }
 
-func (wsh wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (wsh homeWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+
+	c := &connection{send: make(chan []byte, 256), ws: ws, h: wsh.h}
+	c.h.register <- c
+	defer func() { c.h.unregister <- c }()
+	go c.writer()
+	c.reader()
+}
+
+type editWSHandler struct {
+	h *hub
+}
+
+func (wsh editWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	email := session.GetEmail(r)
 	if email == "" {
 		w.WriteHeader(http.StatusForbidden)

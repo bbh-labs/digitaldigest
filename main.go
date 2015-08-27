@@ -26,9 +26,10 @@ func main() {
 	router.HandleFunc("/edit", edit)
 	router.HandleFunc("/login", login)
 	router.HandleFunc("/logout", logout)
-	router.Handle("/ws", ws)
+	router.Handle("/ws/home", homeWS)
+	router.Handle("/ws/edit", editWS)
 	go func() {
-		ws.h.run()
+		wsHub.run()
 	}()
 
 	n := negroni.Classic()

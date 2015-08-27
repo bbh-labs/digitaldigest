@@ -41,7 +41,9 @@ $(document).ready(function() {
 			var video = videoContainer.children("video");
 			video[0].src = "";
 		}
-		window.clearTimeout(nextTimeoutID);
+		if (typeof(nextTimeoutID) == "number") {
+			window.clearTimeout(nextTimeoutID);
+		}
 	});
 
 	slider.on("afterChange", function(e, slick, index) {
@@ -64,7 +66,9 @@ $(document).ready(function() {
 function setNextTimeout(slider) {
 	nextTimeoutID = window.setTimeout(function() {
 		slider.slick("slickNext");
-		window.clearTimeout(nextTimeoutID);
+		if (typeof(nextTimeoutID) == "number") {
+			window.clearTimeout(nextTimeoutID);
+		}
 	}, 5000);
 }
 

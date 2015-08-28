@@ -21,7 +21,12 @@
 	</div>
 	
 	<section>
-		<p class="flow-text">Content</p>
+		<div>
+			<span class="flow-text">Content</span>
+			<span class="secondary-content">
+				<button id="delete-all">Delete all</button>
+			</span>
+		</div>
 		<ul class="collection">
 			{{range .Files}}
 				<li class="collection-item">
@@ -49,7 +54,7 @@
 			<div class="file-field input-field">
 				<div class="btn">
 					<span>File</span>
-					<input type="file" accept="image/*, video/*" name="file" />
+					<input type="file" accept="image/*, video/*" name="file" multiple />
 				</div>
 				<input class="file-path validate" type="text" />
 			</div>
@@ -65,10 +70,29 @@
 <script>
 $(document).ready(function() {
 	$(".delete").click(function(evt) {
-		var file = $(evt.target).data("file");
+		evt.preventDefault();
 
+		var file = $(evt.target).data("file");
 		$.ajax({
 			url: "/edit?" + $.param({file: file}),
+			method: "DELETE",
+			dataType: "json",
+		}).done(function(resp) {
+			window.location.reload();
+		}).fail(function(resp) {
+			if (resp.status == "200") {
+				window.location.reload();
+			} else {
+				console.log(resp);
+			}
+		});
+	});
+
+	$("#delete-all").click(function(evt) {
+		evt.preventDefault();
+
+		$.ajax({
+			url:"/edit?" + $.param({type: "all"}),
 			method: "DELETE",
 			dataType: "json",
 		}).done(function(resp) {

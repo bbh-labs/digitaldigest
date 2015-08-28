@@ -62,29 +62,46 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := headers[0].Open()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-	defer file.Close()
+	for _, header := range headers {
+		file, err := header.Open()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+		defer file.Close()
 
-	filepath := "content/" + headers[0].Filename
-	output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		os.Remove(filepath)
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-	defer output.Close()
+		// Create the 'content' directory if doesn't exist
+		if _, err := os.Stat("content"); err != nil {
+			if os.IsNotExist(err) {
+				if err = os.Mkdir("content", 0700); err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+		}
 
-	if _, err = io.Copy(output, file); err != nil {
-		os.Remove(filepath)
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
+		filepath := "content/" + header.Filename
+		output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			os.Remove(filepath)
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+		defer output.Close()
+
+		if _, err = io.Copy(output, file); err != nil {
+			os.Remove(filepath)
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
 	}
 
 	http.Redirect(w, r, "/edit", http.StatusFound)
@@ -93,6 +110,15 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 func deleteContent(w http.ResponseWriter, r *http.Request) {
 	if session.GetEmail(r) == "" {
 		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	typ := r.FormValue("type")
+	if typ == "all" {
+		if err := deleteCurrentFiles(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+		}
 		return
 	}
 
@@ -112,6 +138,21 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func deleteCurrentFiles() error {
+	fileinfos, err := ioutil.ReadDir("content")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, fileinfo := range fileinfos {
+		if err := os.Remove("content/" + fileinfo.Name()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func usedDiskSpace() int64 {
 	fileinfos, err := ioutil.ReadDir("content")
 	if err != nil {
@@ -126,4 +167,3 @@ func usedDiskSpace() int64 {
 
 	return total
 }
-

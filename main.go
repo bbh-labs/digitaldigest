@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"html/template"
-	"log"
-	"os"
 
 	"github.com/bbhasiapacific/digitaldigest/store"
 	"github.com/codegangsta/negroni"
@@ -17,10 +15,6 @@ func main() {
 	flag.Parse()
 
 	store.Init()
-
-	if err := os.Mkdir("content", 0700); err != nil && !os.IsExist(err) {
-		log.Fatal(err)
-	}
 
 	templates = template.Must(template.New("t").ParseGlob("templates/*.html"))
 

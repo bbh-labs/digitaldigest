@@ -1,106 +1,123 @@
 {{define "home"}}
-{{template "begin"}}
+{{template "begin-head"}}
+<!-- mediaelement -->
+<link href="mediaelement/mediaelementplayer.css" rel="stylesheet" />
+<script src="mediaelement/mediaelement-and-player.js"></script>
+
+<!-- slick -->
+<link href="slick/slick.css" rel="stylesheet" />
+<script src="slick/slick.min.js"></script>
+
+<style>
+	* { margin: 0; padding: 0; height: 100%; }
+	html, body { height: 100%; }
+	video { object-fit: fill; }
+</style>
+{{template "end-head"}}
 
 {{$onlyOneVideo := eq (len .Files) 1}}
-
 <div class="slider">
 	{{range .Files}}
 		<div>
 			{{if eq .Type "image"}}
 				<img src={{.Name}} width="100%" height="100%" />
 			{{else if eq .Type "video"}}
-				<video src="" data-src={{.Name}} width="100%" height="100%"
-					{{if $onlyOneVideo}}
-						loop
-					{{end}} />
+				<video data-src={{.Name}} width="100%" height="100%" preload="none" {{if $onlyOneVideo}} loop {{end}}>
+					<source type="{{.MIMEType}}" src={{.Name}} />
+				</video>
 			{{end}}
 		</div>
 	{{end}}
 </div>
+
+{{template "begin-foot"}}
 <script>
-$(document).ready(function() {
-	var slider = $(".slider");
+	$(document).ready(function() {
+		// Initialize MediaElements
+		$("video").mediaelementplayer();
 
-	slider.slick({
-		arrows: false,
-		dots: false,
-		infinite: true,
-	});
+		// Initialize Slick sliders
+		var slider = $(".slider");
 
-	{{if $onlyOneVideo}}
-		$("video")[0].play();
-	{{end}}
+		slider.slick({
+			arrows: false,
+			dots: false,
+			infinite: true,
+		});
 
-	slider.slick("slickGoTo", 0);
+		{{if $onlyOneVideo}}
+			$("video")[0].play();
+		{{end}}
 
-	slider.on("beforeChange", function(e, slick, index) {
-		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
-		var videoContainer = $(slide).has("video");
-		
-		if (videoContainer.length > 0) {
-			var video = videoContainer.children("video");
-			video[0].src = "";
-		}
-		if (typeof(nextTimeoutID) == "number") {
-			window.clearTimeout(nextTimeoutID);
-		}
-	});
+		slider.slick("slickGoTo", 0);
 
-	slider.on("afterChange", function(e, slick, index) {
-		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
-		var videoContainer = $(slide).has("video");
-		if (videoContainer.length > 0) {
-			var video = videoContainer.children("video");
-			video[0].src = video.data("src");
-			video[0].load();
-			video[0].play();
-			video.on("ended", function(e) {
-				slider.slick("slickNext");
-			});
-		} else {
-			setNextTimeout(slider);
-		}
-	});
-});
-
-function setNextTimeout(slider) {
-	nextTimeoutID = window.setTimeout(function() {
-		slider.slick("slickNext");
-		if (typeof(nextTimeoutID) == "number") {
-			window.clearTimeout(nextTimeoutID);
-		}
-	}, 5000);
-}
-
-<!-- Websocket -->
-function tryWebsocket() {
-	if (typeof(websocket) != "undefined") {
-		if (websocket.readyState != 3) {
-			if (typeof(websocketTimeoutID) == "number") {
-				window.clearTimeout(websocketTimeoutID);
+		slider.on("beforeChange", function(e, slick, index) {
+			var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
+			var videoContainer = $(slide).has("video");
+			if (videoContainer.length > 0) {
+				var video = videoContainer.find("video");
+				video[0].src = "";
 			}
-			return;
-		}
+			if (typeof(nextTimeoutID) == "number") {
+				window.clearTimeout(nextTimeoutID);
+			}
+		});
+
+		slider.on("afterChange", function(e, slick, index) {
+			var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
+			var videoContainer = $(slide).has("video");
+			if (videoContainer.length > 0) {
+				var video = videoContainer.find("video");
+				video[0].src = video.data("src");
+				video[0].load();
+				video[0].play();
+				video.on("ended", function(e) {
+					slider.slick("slickNext");
+				});
+			} else {
+				setNextTimeout(slider);
+			}
+		});
+	});
+
+	function setNextTimeout(slider) {
+		nextTimeoutID = window.setTimeout(function() {
+			slider.slick("slickNext");
+			if (typeof(nextTimeoutID) == "number") {
+				window.clearTimeout(nextTimeoutID);
+			}
+		}, 5000);
 	}
 
-	websocket = new WebSocket("ws://" + BaseURL + "/ws/home");
-	websocket.onopen = function(evt) {
-		console.log("Connected to WebSocket");
-		websocket.onmessage = function(evt) {
-			if (evt.data == "reload") {
-				window.location.reload();
+	<!-- Websocket -->
+	function tryWebsocket() {
+		if (typeof(websocket) != "undefined") {
+			if (websocket.readyState != 3) {
+				if (typeof(websocketTimeoutID) == "number") {
+					window.clearTimeout(websocketTimeoutID);
+				}
+				return;
 			}
 		}
-	}
-	websocket.onclose = function(evt) {
-		console.log("Disconnected from WebSocket");
-		tryWebsocket();
+
+		websocket = new WebSocket("ws://" + BaseURL + "/ws/home");
+		websocket.onopen = function(evt) {
+			console.log("Connected to WebSocket");
+			websocket.onmessage = function(evt) {
+				if (evt.data == "reload") {
+					window.location.reload();
+				}
+			}
+		}
+		websocket.onclose = function(evt) {
+			console.log("Disconnected from WebSocket");
+			tryWebsocket();
+		}
+
+		websocketTimeoutID = window.setTimeout(tryWebsocket, 1000);
 	}
 
-	websocketTimeoutID = window.setTimeout(tryWebsocket, 1000);
-}
-
-tryWebsocket();
+	tryWebsocket();
 </script>
-{{template "end"}}
+{{template "end-foot"}}
 {{end}}

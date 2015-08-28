@@ -5,10 +5,14 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
+	"path"
 	"os"
+	"strings"
 
 	"github.com/bbhmakerlab/digitaldigest/session"
+	"github.com/bbhmakerlab/digitaldigest/store"
 )
 
 const (
@@ -32,11 +36,11 @@ func edit(w http.ResponseWriter, r *http.Request) {
 func getContent(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		UsedDiskSpacePercentage string
-		Files                   []File
+		Entries                 []store.Entry
 		IsLoggedIn              bool
 	}{
 		UsedDiskSpacePercentage: fmt.Sprintf("%.1f", float64(usedDiskSpace())/float64(totalDiskSpace)*100),
-		Files: listFiles(),
+		Entries: store.GetEntries(-1),
 		IsLoggedIn: session.GetEmail(r) != "",
 	}
 
@@ -49,6 +53,25 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	mimeType := ""
+
+	// User uploaded URL
+	url := r.FormValue("url")
+	if url != "" {
+		if strings.Contains(url, "youtube.com/") {
+			mimeType = "video/youtube"
+		} else if strings.Contains(url, "vimeo.com/") {
+			mimeType = "video/vimeo"
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		store.InsertEntry(store.Entry{URL: url, MIMEType: mimeType})
+		return
+	}
+
+	// User uploaded file
 	if err := r.ParseMultipartForm(MultipartMaxMemory); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
@@ -86,10 +109,10 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		filepath := "content/" + header.Filename
-		output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0600)
+		url := "content/" + header.Filename
+		output, err := os.OpenFile(url, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
-			os.Remove(filepath)
+			os.Remove(url)
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 			return
@@ -97,11 +120,14 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 		defer output.Close()
 
 		if _, err = io.Copy(output, file); err != nil {
-			os.Remove(filepath)
+			os.Remove(url)
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
+
+		mimeType = mime.TypeByExtension(path.Base(header.Filename))
+		store.InsertEntry(store.Entry{URL: url, MIMEType: mimeType})
 	}
 
 	http.Redirect(w, r, "/edit", http.StatusFound)
@@ -115,10 +141,7 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 
 	typ := r.FormValue("type")
 	if typ == "all" {
-		if err := deleteCurrentFiles(); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
-		}
+		store.DeleteCurrentEntries()
 		return
 	}
 
@@ -136,21 +159,6 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func deleteCurrentFiles() error {
-	fileinfos, err := ioutil.ReadDir("content")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, fileinfo := range fileinfos {
-		if err := os.Remove("content/" + fileinfo.Name()); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func usedDiskSpace() int64 {

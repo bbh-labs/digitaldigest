@@ -11,9 +11,8 @@ import (
 
 type Entry struct {
 	ID int
-	Title string
-	Description string
-	Filepath string
+	URL string
+	MIMEType string
 	UpdatedAt time.Time
 	CreatedAt time.Time
 }
@@ -30,4 +29,22 @@ func Init() {
 	}
 
 	db.CreateTable(&Entry{})
+}
+
+func InsertEntry(entry Entry) {
+	db.Create(&entry)
+}
+
+func RemoveEntry(entry Entry) {
+	db.Delete(&entry)
+}
+
+func GetEntries(count int) []Entry {
+	var entries []Entry
+	db.Order("created_at desc").Limit(count).Find(&entries)
+	return entries
+}
+
+func DeleteCurrentEntries() {
+	db.Table("entry")
 }

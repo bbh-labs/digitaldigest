@@ -5,26 +5,27 @@
 <script src="https://apis.google.com/js/client:platform.js?onload=onPlatformReady" async defer></script>
 
 <div class="container">
-	<h5>Edit Content
+	<a href="/"><img src="images/bbhmakerlab.png" style="display: block; margin: 0 auto"/></a>
+	<h5 style="color: white">Edit Content
 		<span class="right">
 			{{if .IsLoggedIn}}
-			<button id="signOutButton" onclick="signOut()">Sign Out</button>
+			<button id="signOutButton" class="btn" onclick="signOut()">Sign Out</button>
 			{{else}}
-			<button id="signInButton" onclick="signIn()">Sign In</button>
+			<button id="signInButton" class="btn" onclick="signIn()">Sign In</button>
 			{{end}}
 		</span>
 	</h5>
 
-	<p>{{.UsedDiskSpacePercentage}}% disk space used</p>
+	<p style="color: white">{{.UsedDiskSpacePercentage}}% disk space used</p>
 	<div class="progress">
-		<div class="determinate" style="width: " + {{.UsedDiskSpacePercentage}}></div>
+		<div class="determinate" style="width: {{.UsedDiskSpacePercentage}}%"></div>
 	</div>
 	
 	<section>
 		<div>
 			<span class="flow-text">Content</span>
 			<span class="secondary-content">
-				<button id="delete-all">Delete all</button>
+				<button id="delete-all" class="btn">Delete all</button>
 			</span>
 		</div>
 		<ul class="collection">
@@ -43,12 +44,6 @@
 
 	{{if .IsLoggedIn}}
 	<section>
-		<p class="flow-text">Reload Content</p>
-		<p>This will cause browsers who are viewing the main page to reload</p>
-		<button id="reload" class="btn waves-effect waves-light">Reload</button>
-	</section>
-
-	<section>
 		<p class="flow-text">Post Content</p>
 		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
 			<div class="file-field input-field">
@@ -59,11 +54,13 @@
 				<input class="file-path validate" type="text" />
 			</div>
 			<button type="submit" class="btn waves-effect waves-light">Submit</button>
-			<a href="/" class="right btn grey">Back to Content</a>
 		</form>
 	</section>
-	{{else}}
-		<a href="/" class="right btn grey">Back to Content</a>
+
+	<section>
+		<p class="flow-text">Reload Clients <small>(This will cause browsers who are viewing the main page to reload)</small></p>
+		<button id="reload" class="btn waves-effect waves-light">Reload</button>
+	</section>
 	{{end}}
 </div>
 

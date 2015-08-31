@@ -10,6 +10,7 @@ import (
 )
 
 var templates *template.Template
+var refreshTemplates = flag.Bool("refresh", false, "Refresh templates on every page load")
 
 func main() {
 	flag.Parse()

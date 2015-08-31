@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -38,6 +39,12 @@ func getContent(w http.ResponseWriter, r *http.Request) {
 		UsedDiskSpacePercentage: fmt.Sprintf("%.1f", float64(usedDiskSpace())/float64(totalDiskSpace)*100),
 		Files: listFiles(),
 		IsLoggedIn: session.GetEmail(r) != "",
+	}
+
+	if *refreshTemplates {
+		if tmpls, err := template.New("t").ParseGlob("templates/*.html"); err == nil {
+			templates = tmpls
+		}
 	}
 
 	templates.ExecuteTemplate(w, "edit", data)

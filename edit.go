@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bbhasiapacific/digitaldigest/session"
+	"github.com/bbhmakerlab/digitaldigest/session"
 )
 
 const (

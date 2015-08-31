@@ -8,7 +8,7 @@ Requirements
 
 Installation
 ------------
-1. Run `go get -v github.com/bbhasiapacific/digitaldigest`
-2. Run `cd $GOPATH/src/github.com/bbhasiapacific/digitaldigest`
+1. Run `go get -v github.com/bbhmakerlab/digitaldigest`
+2. Run `cd $GOPATH/src/github.com/bbhmakerlab/digitaldigest`
 3. Run `digitaldigest`
 4. Go to `localhost:8080` or `localhost:8080/edit` in a browser to view or edit the content

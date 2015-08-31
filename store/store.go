@@ -6,7 +6,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
-	"github.com/bbhasiapacific/debug"
+	"github.com/bbhmakerlab/debug"
 )
 
 type Entry struct {

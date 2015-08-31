@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/bbhasiapacific/digitaldigest/session"
+	"github.com/bbhmakerlab/digitaldigest/session"
 )
 
 func logout(w http.ResponseWriter, r *http.Request) {

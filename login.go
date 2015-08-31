@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bbhasiapacific/digitaldigest/session"
+	"github.com/bbhmakerlab/digitaldigest/session"
 	"github.com/google/google-api-go-client/plus/v1"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

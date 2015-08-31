@@ -4,7 +4,7 @@ import (
 	"flag"
 	"html/template"
 
-	"github.com/bbhasiapacific/digitaldigest/store"
+	"github.com/bbhmakerlab/digitaldigest/store"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 )

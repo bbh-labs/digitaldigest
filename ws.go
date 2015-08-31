@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/bbhasiapacific/digitaldigest/session"
+	"github.com/bbhmakerlab/digitaldigest/session"
 	"github.com/gorilla/websocket"
 )
 

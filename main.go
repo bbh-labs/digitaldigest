@@ -4,7 +4,6 @@ import (
 	"flag"
 	"html/template"
 
-	"github.com/bbhmakerlab/digitaldigest/store"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 )
@@ -14,8 +13,6 @@ var refreshTemplates = flag.Bool("refresh", false, "Refresh templates on every p
 
 func main() {
 	flag.Parse()
-
-	store.Init()
 
 	templates = template.Must(template.New("t").ParseGlob("templates/*.html"))
 

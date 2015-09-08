@@ -6,10 +6,16 @@ import (
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
+	entries := listEntries()
+
 	data := struct {
-		Files []File
+		Entries []Entry
+		NumImages int
+		NumVideos int
 	}{
-		Files: listFiles(),
+		Entries: entries,
+		NumImages: countImages(entries),
+		NumVideos: countVideos(entries),
 	}
 
 	if *refreshTemplates {

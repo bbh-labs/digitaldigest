@@ -1,20 +1,26 @@
 {{define "home"}}
 {{template "begin"}}
 
-{{$onlyOneVideo := eq (len .Files) 1}}
+{{ $onlyOneVideo := (and (eq (len .Entries) 1) (eq .NumVideos 1) (eq .NumImages 0)) }}
 
 <div class="slider">
-	{{range .Files}}
+	{{range .Entries}}
+
+		{{with .Image}}
 		<div>
-			{{if eq .Type "image"}}
-				<img src={{.Name}} width="100%" height="100%" />
-			{{else if eq .Type "video"}}
-				<video src="" data-src={{.Name}} width="100%" height="100%"
-					{{if $onlyOneVideo}}
-						loop
-					{{end}} />
-			{{end}}
+			<img src={{.}} width="100%" height="100%" />
 		</div>
+		{{end}}
+
+		{{with .Video}}
+		<div>
+			<video data-src={{.}} width="100%" height="100%"
+				{{if $onlyOneVideo}}
+					loop
+				{{end}} />
+		</div>
+		{{end}}
+
 	{{end}}
 </div>
 <script>

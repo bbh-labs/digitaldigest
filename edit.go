@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/bbhmakerlab/digitaldigest/session"
 )
@@ -33,11 +34,11 @@ func edit(w http.ResponseWriter, r *http.Request) {
 func getContent(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		UsedDiskSpacePercentage string
-		Files                   []File
+		Entries                 []Entry
 		IsLoggedIn              bool
 	}{
 		UsedDiskSpacePercentage: fmt.Sprintf("%.1f", float64(usedDiskSpace())/float64(totalDiskSpace)*100),
-		Files: listFiles(),
+		Entries: listEntries(),
 		IsLoggedIn: session.GetEmail(r) != "",
 	}
 
@@ -70,6 +71,14 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, header := range headers {
+		// Is filename valid?
+		filenameNoExt := filenameWithoutExtension(header.Filename)
+		isImage := strings.HasSuffix(filenameNoExt, "_image")
+		isVideo := strings.HasSuffix(filenameNoExt, "_video")
+		if (isImage || isVideo) == false {
+			continue
+		}
+
 		file, err := header.Open()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -129,17 +138,17 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file := r.FormValue("file")
+	fileinfos, err := ioutil.ReadDir("content")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	if err := os.Remove(file); err != nil {
-		if os.IsNotExist(err) {
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("File " + file + " was not found!"))
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+	name := r.FormValue("name")
+	for _, fileinfo := range fileinfos {
+		filename := fileinfo.Name()
+		if pureName(filename) == name {
+			os.Remove("content/" + filename)
 		}
-		return
 	}
 
 	w.WriteHeader(http.StatusOK)

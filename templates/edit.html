@@ -22,20 +22,23 @@
 	</div>
 	
 	<section>
-		<div>
+		<div class="row" style="margin-left: 0; margin-right: 0;">
 			<span class="flow-text">Content</span>
 			<span class="secondary-content">
 				<button id="delete-all" class="btn">Delete all</button>
 			</span>
 		</div>
 		<ul class="collection">
-			{{range .Files}}
-				<li class="collection-item">
-					{{.Name}}
+			{{range .Entries}}
+				<li class="collection-item row">
+					<img class="col s3 responsive-img" src="{{.Image}}" />
 					{{if $.IsLoggedIn}}
-					<span class="secondary-content">
-						<i class="delete material-icons" data-file="{{.Name}}">delete</i>
-					</span>
+					<div class="col s9">
+						<p class="flow-text">{{.Name}} {{if not .Video}}<small>(no video)</small>{{end}}</p>
+						<span class="secondary-content">
+							<i class="delete material-icons" data-name="{{.Name}}">delete</i>
+						</span>
+					</div>
 					{{end}}
 				</li>
 			{{end}}
@@ -44,7 +47,7 @@
 
 	{{if .IsLoggedIn}}
 	<section>
-		<p class="flow-text">Post Content</p>
+		<p class="flow-text">Post Content</p><small>Image and video filenames must end with <em>_image</em> and <em>_video</em> respectively</small><br/>
 		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
 			<div class="file-field input-field">
 				<div class="btn">
@@ -58,7 +61,7 @@
 	</section>
 
 	<section>
-		<p class="flow-text">Reload Clients <small>(This will cause browsers who are viewing the main page to reload)</small></p>
+		<p class="flow-text">Reload Clients</p><small>This will cause browsers who are viewing the main page to reload</small><br/>
 		<button id="reload" class="btn waves-effect waves-light">Reload</button>
 	</section>
 	{{end}}
@@ -71,9 +74,9 @@ $(document).ready(function() {
 	$(".delete").click(function(evt) {
 		evt.preventDefault();
 
-		var file = $(evt.target).data("file");
+		var name = $(evt.target).data("name");
 		$.ajax({
-			url: "/edit?" + $.param({file: file}),
+			url: "/edit?" + $.param({name: name}),
 			method: "DELETE",
 			dataType: "json",
 		}).done(function(resp) {

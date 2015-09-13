@@ -8,16 +8,17 @@
 
 		{{with .Image}}
 		<div>
-			<img src={{.}} width="100%" height="100%" />
+			<img src="{{.}}" width="100%" height="100%" />
 		</div>
 		{{end}}
 
-		{{with .Video}}
+		{{if .Video}}
 		<div>
-			<video data-src={{.}} width="100%" height="100%"
-				{{if $onlyOneVideo}}
-					loop
-				{{end}} />
+			<video class="video-js vjs-default-skin" data-src="{{ .Video }}" width="100%" height="100%" preload="none"
+				{{if .IsYoutube}} data-setup='{ "techOrder": ["youtube"], "src": "{{ .Video }}" }' {{end}}
+				{{if .IsVimeo}} data-setup='{ "techOrder": ["vimeo"], "src": "{{ .Video }}" }' {{end}}
+				{{if $onlyOneVideo}} loop {{end}}>
+			</video>
 		</div>
 		{{end}}
 
@@ -34,19 +35,37 @@ $(document).ready(function() {
 	});
 
 	{{if $onlyOneVideo}}
-		$("video")[0].play();
+		var video = $(".video-js");
+		if (video.length > 0) {
+			console.log(video);
+			var src = $(video[0]).data("src");
+			if (src.match(/(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)/)) {
+				var player = videojs(video[0]);
+				player.play();
+			} else {
+				video[0].play();
+			}
+		}
 	{{end}}
 
 	slider.slick("slickGoTo", 0);
 
 	slider.on("beforeChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
-		var videoContainer = $(slide).has("video");
+		var video = $(slide).find(".video-js");
 		
-		if (videoContainer.length > 0) {
-			var video = videoContainer.children("video");
-			video[0].src = "";
+		if (video.length > 0) {
+			var src = $(video[0]).data("src");
+			if (src.match(/(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)/)) {
+				var player = videojs(video[0].id);
+				player.currentTime(0);
+				player.pause();
+			} else {
+				video[0].src = "";
+				video[0].pause();
+			}
 		}
+
 		if (typeof(nextTimeoutID) == "number") {
 			window.clearTimeout(nextTimeoutID);
 		}
@@ -54,15 +73,23 @@ $(document).ready(function() {
 
 	slider.on("afterChange", function(e, slick, index) {
 		var slide = $.find(".slider .slick-slide:nth-child(" + (index + 2) + ")");
-		var videoContainer = $(slide).has("video");
-		if (videoContainer.length > 0) {
-			var video = videoContainer.children("video");
-			video[0].src = video.data("src");
-			video[0].load();
-			video[0].play();
-			video.on("ended", function(e) {
-				slider.slick("slickNext");
-			});
+		var video = $(slide).find(".video-js");
+		if (video.length > 0) {
+			var src = $(video[0]).data("src");
+			video[0].src = src;
+			if (src.match(/(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)/)) {
+				var player = videojs(video[0].id);
+				player.play();
+				player.on("ended", function() {
+					player.src(src);
+					slider.slick("slickNext");
+				});
+			} else {
+				video[0].play();
+				video.on("ended", function(e) {
+					slider.slick("slickNext");
+				});
+			}
 		} else {
 			setNextTimeout(slider);
 		}

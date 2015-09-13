@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/bbhmakerlab/digitaldigest/session"
@@ -25,7 +26,12 @@ func edit(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		getContent(w, r)
 	case "POST":
-		postContent(w, r)
+		switch r.FormValue("type") {
+		case "files":
+			uploadContent(w, r)
+		case "url":
+			uploadLink(w, r)
+		}
 	case "DELETE":
 		deleteContent(w, r)
 	default:
@@ -50,10 +56,11 @@ func getContent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.WriteHeader(http.StatusOK)
 	templates.ExecuteTemplate(w, "edit", data)
 }
 
-func postContent(w http.ResponseWriter, r *http.Request) {
+func uploadContent(w http.ResponseWriter, r *http.Request) {
 	if session.GetEmail(r) == "" {
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -89,22 +96,14 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 		defer file.Close()
 
 		// Create the 'content' directory if doesn't exist
-		if _, err := os.Stat("content"); err != nil {
-			if os.IsNotExist(err) {
-				if err = os.Mkdir("content", 0700); err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					log.Println(err)
-					return
-				}
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
+		if err = prepareContentDirectory(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
 		}
 
 		filepath := "content/" + header.Filename
-		output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0600)
+		output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			os.Remove(filepath)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -120,6 +119,59 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	http.Redirect(w, r, "/edit", http.StatusFound)
+}
+
+func uploadLink(w http.ResponseWriter, r *http.Request) {
+	if session.GetEmail(r) == "" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	name := r.FormValue("name")
+
+	// Check if there's an entry that has same name
+	entries := listEntries()
+	for _, entry := range entries {
+		if name == entry.Name {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	url := r.FormValue("url")
+
+	// Check if the url is valid
+	matched, err := regexp.Match(`(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)`, []byte(url))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	} else if !matched {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Create the 'content' directory if doesn't exist
+	if err = prepareContentDirectory(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	// Create URL file
+	filepath := "content/" + name + ".txt"
+	output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		os.Remove(filepath)
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+	defer output.Close()
+
+	// Write URL to file
+	output.Write([]byte(url))
 
 	http.Redirect(w, r, "/edit", http.StatusFound)
 }
@@ -184,4 +236,18 @@ func usedDiskSpace() int64 {
 	}
 
 	return total
+}
+
+func prepareContentDirectory() error {
+	if _, err := os.Stat("content"); err != nil {
+		if os.IsNotExist(err) {
+			if err = os.Mkdir("content", 0755); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }

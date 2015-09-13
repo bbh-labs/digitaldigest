@@ -47,16 +47,31 @@
 
 	{{if .IsLoggedIn}}
 	<section>
-		<p class="flow-text">Post Content</p><small>Image and video must have the same name</small><br/>
+		<p class="flow-text">Upload Content</p><small>Image and video must have the same name</small><br/>
 		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
 			<div class="file-field input-field">
 				<div class="btn">
-					<span>File</span>
+					<span>Files</span>
 					<input type="file" accept="image/*, video/*" name="file" multiple />
 				</div>
 				<input class="file-path validate" type="text" />
 			</div>
-			<button type="submit" class="btn waves-effect waves-light">Submit</button>
+			<button type="submit" class="btn waves-effect waves-light" name="type" value="files">Submit</button>
+		</form>
+	</section>
+
+	<section>
+		<p class="flow-text">Upload Link</p><small>Youtube and Vimeo links are supported</small><br/>
+		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
+			<div class="input-field">
+				<input type="text" name="name" />
+				<label class="active">Name</label>
+			</div>
+			<div class="input-field">
+				<input type="url" name="url" pattern="(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)" maxlength="2000" />
+				<label class="active">URL</label>
+			</div>
+			<button type="submit" class="btn waves-effect waves-light" name="type" value="url">Submit</button>
 		</form>
 	</section>
 

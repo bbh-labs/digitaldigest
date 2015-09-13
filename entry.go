@@ -48,17 +48,16 @@ func listEntries() []Entry {
 	var entry Entry
 
 	for i, fileinfo := range fileinfos {
-		purename := pureName(fileinfo.Name())
-		if entry.Name != "" && entry.Name != purename {
+		name := filenameWithoutExtension(fileinfo.Name())
+		if entry.Name != "" && entry.Name != name {
 			entries = append(entries, entry)
 			entry = Entry{}
 		}
-		entry.Name = purename
+		entry.Name = name
 
-		filename := filenameWithoutExtension(fileinfo.Name())
 		mimeType := mime.TypeByExtension(path.Ext(fileinfo.Name()))
-		isImage := strings.HasPrefix(mimeType, "image") && strings.HasSuffix(filename, "_image")
-		isVideo := strings.HasPrefix(mimeType, "video") && strings.HasSuffix(filename, "_video")
+		isImage := strings.HasPrefix(mimeType, "image")
+		isVideo := strings.HasPrefix(mimeType, "video")
 
 		if isImage {
 			entry.Image = "content/" + fileinfo.Name()
@@ -77,9 +76,4 @@ func listEntries() []Entry {
 func filenameWithoutExtension(filename string) string {
 	ext := path.Ext(path.Base(filename))
 	return filename[:len(filename) - len(ext)]
-}
-
-func pureName(filename string) string {
-	basename := path.Base(filename)
-	return filename[:strings.LastIndex(basename, "_")]
 }

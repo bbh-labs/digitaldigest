@@ -6,7 +6,9 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
+	"path"
 	"os"
 	"strings"
 
@@ -71,10 +73,9 @@ func postContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, header := range headers {
-		// Is filename valid?
-		filenameNoExt := filenameWithoutExtension(header.Filename)
-		isImage := strings.HasSuffix(filenameNoExt, "_image")
-		isVideo := strings.HasSuffix(filenameNoExt, "_video")
+		mimeType := mime.TypeByExtension(path.Ext(header.Filename))
+		isImage := strings.HasPrefix(mimeType, "image")
+		isVideo := strings.HasPrefix(mimeType, "video")
 		if (isImage || isVideo) == false {
 			continue
 		}
@@ -146,7 +147,8 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 	for _, fileinfo := range fileinfos {
 		filename := fileinfo.Name()
-		if pureName(filename) == name {
+		matching := name == filenameWithoutExtension(filename)
+		if matching {
 			os.Remove("content/" + filename)
 		}
 	}

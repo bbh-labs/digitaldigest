@@ -118,6 +118,11 @@ $(document).ready(function() {
 	$("#delete-all").click(function(evt) {
 		evt.preventDefault();
 
+		var ok = confirm("Delete all the entries?");
+		if (!ok) {
+			return;
+		}
+
 		$.ajax({
 			url:"/edit?" + $.param({type: "all"}),
 			method: "DELETE",

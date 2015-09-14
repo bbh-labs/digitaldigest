@@ -24,9 +24,11 @@
 	<section>
 		<div class="row" style="margin-left: 0; margin-right: 0;">
 			<span class="flow-text">Content</span>
+			{{if $.IsLoggedIn}}
 			<span class="secondary-content">
 				<button id="delete-all" class="btn">Delete all</button>
 			</span>
+			{{end}}
 		</div>
 		<ul class="collection">
 			{{range .Entries}}

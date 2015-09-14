@@ -3,6 +3,20 @@
 
 {{ $onlyOneVideo := (and (eq (len .Entries) 1) (eq .NumVideos 1) (eq .NumImages 0)) }}
 
+{{if $onlyOneVideo }}
+
+	{{range .Entries}}
+
+		<video class="video-js vjs-default-skin" data-src="{{ .Video }}" width="100%" height="100%" loop preload="none"
+			{{if .IsYoutube}} data-setup='{ "techOrder": ["youtube"], "src": "{{ .Video }}" }'
+			{{else if .IsVimeo}} data-setup='{ "techOrder": ["vimeo"], "src": "{{ .Video }}" }'
+			{{else}} src="{{ .Video }}" autoplay {{end}}>
+		</video>
+
+	{{end}}
+
+{{else}}
+
 <div class="slider">
 	{{range .Entries}}
 
@@ -24,8 +38,27 @@
 
 	{{end}}
 </div>
+
+{{end}}
+
 <script>
 $(document).ready(function() {
+	{{if $onlyOneVideo}}
+
+	var video = $(".video-js");
+	if (video.length > 0) {
+		console.log(video);
+		var src = $(video[0]).data("src");
+		if (src.match(/(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)/)) {
+			var player = videojs(video[0]);
+			player.play();
+		} else {
+			video[0].play();
+		}
+	}
+
+	{{else}}
+
 	var slider = $(".slider");
 
 	slider.slick({
@@ -33,20 +66,6 @@ $(document).ready(function() {
 		dots: false,
 		infinite: true,
 	});
-
-	{{if $onlyOneVideo}}
-		var video = $(".video-js");
-		if (video.length > 0) {
-			console.log(video);
-			var src = $(video[0]).data("src");
-			if (src.match(/(.*youtube\.com\/.+)|(.*vimeo\.com\/.+)/)) {
-				var player = videojs(video[0]);
-				player.play();
-			} else {
-				video[0].play();
-			}
-		}
-	{{end}}
 
 	slider.slick("slickGoTo", 0);
 
@@ -94,6 +113,8 @@ $(document).ready(function() {
 			setNextTimeout(slider);
 		}
 	});
+
+	{{end}}
 });
 
 function setNextTimeout(slider) {

@@ -43,7 +43,11 @@
 						</label>
 					</div>
 					<div class="col s9">
+						{{if .Video}}
+						<a href="{{ .Video }}" class="flow-text">{{.Name}}</a>
+						{{else}}
 						<p class="flow-text">{{.Name}} {{if not .Video}}<small>(no video)</small>{{end}}</p>
+						{{end}}
 						{{if $.IsLoggedIn}}
 						<span class="secondary-content">
 							<i class="delete material-icons" data-name="{{.Name}}">delete</i>

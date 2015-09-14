@@ -60,8 +60,8 @@ func editImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := r.FormValue("name")
-	deletePreviousFile(name)
-
+	typ := r.FormValue("type")
+	deletePreviousFile(name, typ)
 	saveMediaFile(headers[0], name)
 }
 
@@ -196,7 +196,7 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func deletePreviousFile(name string) error {
+func deletePreviousFile(name, typ string) error {
 	fileinfos, err := ioutil.ReadDir("content")
 	if err != nil {
 		log.Fatal(err)
@@ -205,11 +205,14 @@ func deletePreviousFile(name string) error {
 	for _, fileinfo := range fileinfos {
 		filename := fileinfo.Name()
 		if n := filenameWithoutExtension(filename); name == n {
-			if err := os.Remove("content/" + filename); err != nil {
-				return err
+			mimeType := mime.TypeByExtension(filename)
+			if strings.HasPrefix(mimeType, typ) {
+				if err := os.Remove("content/" + filename); err != nil {
+					return err
+				}
+				log.Println("Deleted file:", filename)
+				return nil
 			}
-			log.Println("Deleted file:", filename)
-			return nil
 		}
 	}
 

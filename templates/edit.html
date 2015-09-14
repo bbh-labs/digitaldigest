@@ -39,7 +39,7 @@
 						{{end}}
 						<label>
 							<h5 class="white-text">Upload Image</h5>
-							<input class="media-input" name="image" type="file" accept="image/*" data-name="{{.Name}}" />
+							<input class="media-input" name="image" type="file" accept="image/*" data-name="{{ .Name }}" data-type="image" />
 						</label>
 					</div>
 					<div class="col s9">
@@ -151,8 +151,10 @@ $(document).ready(function() {
 		if (files.length > 0) {
 			var fd = new FormData();
 			var name = $(evt.target).data("name");
+			var type = $(evt.target).data("type");
 			fd.append("file", files[0]);
 			fd.append("name", name);
+			fd.append("type", type);
 			$.ajax({
 				url: "/edit/image",
 				method: "PUT",

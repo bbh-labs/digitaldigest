@@ -19,6 +19,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", home)
 	router.HandleFunc("/edit", edit)
+	router.HandleFunc("/edit/image", editImage)
 	router.HandleFunc("/login", login)
 	router.HandleFunc("/logout", logout)
 	router.Handle("/ws/home", homeWS)

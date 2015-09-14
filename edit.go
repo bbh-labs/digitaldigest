@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mime"
+	"mime/multipart"
 	"net/http"
 	"path"
 	"os"
@@ -39,6 +40,31 @@ func edit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func editImage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PUT" {
+		return
+	}
+
+	if session.GetEmail(r) == "" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	headers, err := prepareMultipartForm(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	} else if headers == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	name := r.FormValue("name")
+	deletePreviousFile(name)
+
+	saveMediaFile(headers[0], name)
+}
+
 func getContent(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		UsedDiskSpacePercentage string
@@ -66,57 +92,19 @@ func uploadContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := r.ParseMultipartForm(MultipartMaxMemory); err != nil {
+	headers, err := prepareMultipartForm(r)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
 		return
-	}
-
-	headers := r.MultipartForm.File["file"]
-	if len(headers) == 0 {
+	} else if headers == nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println("no files were uploaded")
 		return
 	}
 
 	for _, header := range headers {
-		mimeType := mime.TypeByExtension(path.Ext(header.Filename))
-		isImage := strings.HasPrefix(mimeType, "image")
-		isVideo := strings.HasPrefix(mimeType, "video")
-		if (isImage || isVideo) == false {
-			continue
-		}
-
-		file, err := header.Open()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+		if err = saveMediaFile(header, ""); err != nil {
 			log.Println(err)
-			return
-		}
-		defer file.Close()
-
-		// Create the 'content' directory if doesn't exist
-		if err = prepareContentDirectory(); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
-			return
-		}
-
-		filepath := "content/" + header.Filename
-		output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			os.Remove(filepath)
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
-			return
-		}
-		defer output.Close()
-
-		if _, err = io.Copy(output, file); err != nil {
-			os.Remove(filepath)
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
-			return
 		}
 	}
 
@@ -208,6 +196,26 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func deletePreviousFile(name string) error {
+	fileinfos, err := ioutil.ReadDir("content")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, fileinfo := range fileinfos {
+		filename := fileinfo.Name()
+		if n := filenameWithoutExtension(filename); name == n {
+			if err := os.Remove("content/" + filename); err != nil {
+				return err
+			}
+			log.Println("Deleted file:", filename)
+			return nil
+		}
+	}
+
+	return nil
+}
+
 func deleteCurrentFiles() error {
 	fileinfos, err := ioutil.ReadDir("content")
 	if err != nil {
@@ -238,6 +246,21 @@ func usedDiskSpace() int64 {
 	return total
 }
 
+func prepareMultipartForm(r *http.Request) ([]*multipart.FileHeader, error) {
+	if err := r.ParseMultipartForm(MultipartMaxMemory); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	headers := r.MultipartForm.File["file"]
+	if len(headers) == 0 {
+		log.Println("no files were uploaded")
+		return nil, nil
+	}
+
+	return headers, nil
+}
+
 func prepareContentDirectory() error {
 	if _, err := os.Stat("content"); err != nil {
 		if os.IsNotExist(err) {
@@ -247,6 +270,47 @@ func prepareContentDirectory() error {
 		} else {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func saveMediaFile(header *multipart.FileHeader, name string) error {
+	ext := path.Ext(header.Filename)
+	mimeType := mime.TypeByExtension(ext)
+	isImage := strings.HasPrefix(mimeType, "image")
+	isVideo := strings.HasPrefix(mimeType, "video")
+	if (isImage || isVideo) == false {
+		return nil
+	}
+
+	file, err := header.Open()
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create the 'content' directory if doesn't exist
+	if err = prepareContentDirectory(); err != nil {
+		return err
+	}
+
+	var filepath string
+	if name != "" {
+		filepath = "content/" + name + ext
+	} else {
+		filepath = "content/" + header.Filename
+	}
+	output, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		os.Remove(filepath)
+		return err
+	}
+	defer output.Close()
+
+	if _, err = io.Copy(output, file); err != nil {
+		os.Remove(filepath)
+		return err
 	}
 
 	return nil

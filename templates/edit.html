@@ -33,7 +33,15 @@
 		<ul class="collection">
 			{{range .Entries}}
 				<li class="collection-item row">
-					<img class="col s3 responsive-img" src="{{.Image}}" />
+					<div class="image-placeholder col s3">
+						{{if .Image}}
+							<img src="{{.Image}}" />
+						{{end}}
+						<label>
+							<h5 class="white-text">Upload Image</h5>
+							<input class="media-input" name="image" type="file" accept="image/*" data-name="{{.Name}}" />
+						</label>
+					</div>
 					<div class="col s9">
 						<p class="flow-text">{{.Name}} {{if not .Video}}<small>(no video)</small>{{end}}</p>
 						{{if $.IsLoggedIn}}
@@ -128,6 +136,29 @@ $(document).ready(function() {
 	$("#reload").click(function(evt) {
 		if (websocket.readyState == 1) {
 			websocket.send("reload");
+		}
+	});
+
+	$(".media-input").change(function(evt) {
+		evt.preventDefault();
+
+		var files = evt.target.files;
+		if (files.length > 0) {
+			var fd = new FormData();
+			var name = $(evt.target).data("name");
+			fd.append("file", files[0]);
+			fd.append("name", name);
+			$.ajax({
+				url: "/edit/image",
+				method: "PUT",
+				data: fd,
+				processData: false,
+				contentType: false,
+			}).done(function(resp) {
+				window.location.reload();
+			}).fail(function(resp) {
+				Materialize.toast("Failed to upload image", 3000, "red white-text");
+			});;
 		}
 	});
 });

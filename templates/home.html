@@ -42,6 +42,8 @@
 {{end}}
 
 <script>
+var slider;
+
 $(document).ready(function() {
 	{{if $onlyOneVideo}}
 
@@ -59,7 +61,7 @@ $(document).ready(function() {
 
 	{{else}}
 
-	var slider = $(".slider");
+	slider = $(".slider");
 
 	slider.slick({
 		arrows: false,
@@ -155,6 +157,31 @@ function tryWebsocket() {
 }
 
 tryWebsocket();
+
+<!-- Leap Motion -->
+var lastActivatedTime = 0;
+
+var controller = Leap.loop({enableGestures:true}, function(frame) {
+	if (!slider) {
+		return;
+	}
+
+	var hands = frame.hands;
+	if (hands.length > 0) {
+		var velocity = hands[0].palmVelocity[0];
+		var now = Date.now();
+		if (now - lastActivatedTime > 200) {
+			if (velocity > 200) {
+				slider.slick("slickNext");
+				lastActivatedTime = now;
+			} else if (velocity < -200) {
+				slider.slick("slickPrev");
+				lastActivatedTime = now;
+			}
+		}
+	}
+});
+
 </script>
 {{template "end"}}
 {{end}}

@@ -171,10 +171,10 @@ var controller = Leap.loop({enableGestures:true}, function(frame) {
 		var velocity = hands[0].palmVelocity[0];
 		var now = Date.now();
 		if (now - lastActivatedTime > 1000) {
-			if (velocity > 200) {
+			if (velocity > 400) {
 				slider.slick("slickNext");
 				lastActivatedTime = now;
-			} else if (velocity < -200) {
+			} else if (velocity < -400) {
 				slider.slick("slickPrev");
 				lastActivatedTime = now;
 			}

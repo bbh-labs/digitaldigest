@@ -166,19 +166,18 @@ var controller = Leap.loop({enableGestures:true}, function(frame) {
 		return;
 	}
 
-	var hands = frame.hands;
-	if (hands.length > 0) {
-		var velocity = hands[0].palmVelocity[0];
-		var now = Date.now();
-		if (now - lastActivatedTime > 1000) {
-			if (velocity > 400) {
-				slider.slick("slickNext");
-				lastActivatedTime = now;
-			} else if (velocity < -400) {
+	var now = Date.now();
+	if (frame.valid && frame.gestures.length > 0) {
+		frame.gestures.forEach(function(gesture) {
+			var direction = gesture.direction[0];
+			if (direction > 0) {
 				slider.slick("slickPrev");
 				lastActivatedTime = now;
+			} else if (direction < 0) {
+				slider.slick("slickNext");
+				lastActivatedTime = now;
 			}
-		}
+		});
 	}
 });
 

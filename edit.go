@@ -101,11 +101,15 @@ func uploadContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, header := range headers {
-		if err = saveMediaFile(header, ""); err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
+	name := r.FormValue("name")
+	if name == "" || videoExists(name) {
+		http.Redirect(w, r, "/edit", http.StatusNotModified)
+		return
+	}
+
+	if err = saveMediaFile(headers[0], name); err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	http.Redirect(w, r, "/edit", http.StatusFound)
@@ -118,6 +122,10 @@ func uploadLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := r.FormValue("name")
+	if name == "" || videoExists(name) {
+		http.Redirect(w, r, "/edit", http.StatusNotModified)
+		return
+	}
 
 	// Check if there's an entry that has same name
 	entries := listEntries()
@@ -317,4 +325,16 @@ func saveMediaFile(header *multipart.FileHeader, name string) error {
 	}
 
 	return nil
+}
+
+func videoExists(name string) bool {
+	entries := listEntries()
+
+	for _, entry := range entries {
+		if entry.Name == name && entry.Video != "" {
+			return true
+		}
+	}
+
+	return false
 }

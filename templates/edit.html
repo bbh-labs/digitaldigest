@@ -64,7 +64,7 @@
 		<p class="flow-text">Upload Link</p><small>Youtube and Vimeo links are supported</small><br/>
 		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
 			<div class="input-field">
-				<input type="text" name="name" />
+				<input type="text" name="name" required />
 				<label class="active">Name</label>
 			</div>
 			<div class="input-field">
@@ -76,14 +76,16 @@
 	</section>
 
 	<section>
-		<p class="flow-text">Upload Content</p><small>An entry consisting of an image and a video must have the same name. The name before the file extension (e.g. .jpg, .png, .mp4, ...) will be used as the entry name.</small><br/>
+		<p class="flow-text">Upload Video</p><small>Use this for videos that are not on Youtube or Vimeo</small><br/>
 		<form id="post" action="/edit" method="POST" enctype="multipart/form-data">
-			<div class="file-field input-field">
-				<div class="btn">
-					<span>Files</span>
-					<input type="file" accept="image/*, video/*" name="file" multiple />
+			<div class="input-field">
+				<input type="text" name="name" required />
+				<label class="active">Name</label>
+			</div>
+			<div class="input-field row">
+				<div class="col s12">
+					<input type="file" accept="video/*" name="file" />
 				</div>
-				<input class="file-path validate" type="text" />
 			</div>
 			<button type="submit" class="btn waves-effect waves-light" name="type" value="files">Submit</button>
 		</form>

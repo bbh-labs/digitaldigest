@@ -169,13 +169,19 @@ var controller = Leap.loop({enableGestures:true}, function(frame) {
 	var now = Date.now();
 	if (frame.valid && frame.gestures.length > 0) {
 		frame.gestures.forEach(function(gesture) {
-			var direction = gesture.direction[0];
-			if (direction > 0) {
-				slider.slick("slickPrev");
-				lastActivatedTime = now;
-			} else if (direction < 0) {
-				slider.slick("slickNext");
-				lastActivatedTime = now;
+			switch (gesture.type) {
+			case "swipe":
+				var direction = gesture.direction[0];
+				if (direction > 0) {
+					slider.slick("slickPrev");
+					lastActivatedTime = now;
+					return;
+				} else if (direction < 0) {
+					slider.slick("slickNext");
+					lastActivatedTime = now;
+					return;
+				}
+				break;
 			}
 		});
 	}

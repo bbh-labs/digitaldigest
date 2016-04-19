@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bbhmakerlab/digitaldigest/session"
+	"github.com/bbh-labs/digitaldigest/session"
 )
 
 const (
